@@ -731,6 +731,29 @@ function setupQualityOptions() {
 // ─── Event Listeners Setup ───────────────────────────────────────────────────
 
 function setupEventListeners() {
+  // UI Mode Toggle
+  const modeToggle = $('#ui-mode-toggle');
+  const modeLabel = $('#mode-label');
+  
+  // Load saved preference or default to simple
+  const savedMode = localStorage.getItem('footage_ui_mode') || 'simple';
+  if (modeToggle) {
+    modeToggle.checked = savedMode === 'advanced';
+    document.body.classList.toggle('mode-simple', !modeToggle.checked);
+    if (modeLabel) {
+      modeLabel.textContent = modeToggle.checked ? 'Giao diện: Nâng cao' : 'Giao diện: Đơn giản';
+    }
+    
+    modeToggle.addEventListener('change', (e) => {
+      const isAdvanced = e.target.checked;
+      document.body.classList.toggle('mode-simple', !isAdvanced);
+      if (modeLabel) {
+        modeLabel.textContent = isAdvanced ? 'Giao diện: Nâng cao' : 'Giao diện: Đơn giản';
+      }
+      localStorage.setItem('footage_ui_mode', isAdvanced ? 'advanced' : 'simple');
+    });
+  }
+
   const btnBrowseSource = $('#btn-browse-source');
   const sourceInput = $('#source-path');
   const btnScan = $('#btn-scan');

@@ -8,9 +8,9 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
 </head>
-<body>
+<body class="mode-simple">
   <div class="app-container">
 
     <!-- Header -->
@@ -20,7 +20,16 @@
         <h1>FootageLite</h1>
         <span class="header-subtitle">Công cụ nén Video Footage</span>
       </div>
-      <div id="ffmpeg-status" class="ffmpeg-status"></div>
+      <div class="header-actions">
+        <div id="ffmpeg-status" class="ffmpeg-status"></div>
+        <div class="mode-toggle">
+          <span class="mode-label" id="mode-label">Giao diện: Đơn giản</span>
+          <label class="switch">
+            <input type="checkbox" id="ui-mode-toggle">
+            <span class="slider-toggle round"></span>
+          </label>
+        </div>
+      </div>
     </header>
 
     <!-- FFmpeg Warning Banner (hidden by default) -->
@@ -199,17 +208,17 @@
                 Duyệt
               </button>
             </div>
-            <label class="checkbox-custom" style="margin-top: 8px;">
+            <label class="checkbox-custom advanced-mode-only" style="margin-top: 8px;">
               <input type="checkbox" id="keep-structure" checked>
               <span class="checkmark"></span>
               Giữ cấu trúc thư mục con
             </label>
           </div>
 
-          <hr class="divider">
+          <hr class="divider advanced-mode-only">
 
           <!-- Size Threshold -->
-          <div class="setting-group">
+          <div class="setting-group advanced-mode-only">
             <label class="setting-label">📏 Dung lượng tối thiểu</label>
             <p class="setting-desc">Chỉ nén file có dung lượng từ giá trị này trở lên</p>
             <div class="size-threshold-input">
@@ -218,7 +227,7 @@
             </div>
           </div>
 
-          <hr class="divider">
+          <hr class="divider advanced-mode-only">
 
           <!-- Quality Preset -->
           <div class="setting-group">
@@ -248,7 +257,7 @@
                 <p class="quality-desc">Chất lượng tốt, tối ưu dung lượng lưu trữ.</p>
                 <span class="quality-estimate">Giảm ~70-85%</span>
               </div>
-              <div class="quality-option" data-crf="custom" data-preset="medium">
+              <div class="quality-option advanced-mode-only" data-crf="custom" data-preset="medium">
                 <div class="quality-header">
                   <span class="quality-badge">🔧</span>
                   <strong>Tùy chỉnh</strong>
@@ -269,10 +278,10 @@
             </div>
           </div>
 
-          <hr class="divider">
+          <hr class="divider advanced-mode-only">
 
           <!-- Codec -->
-          <div class="setting-group">
+          <div class="setting-group advanced-mode-only">
             <label class="setting-label">🎞️ Codec</label>
             <div class="select-wrapper">
               <select id="codec-select" class="select">
@@ -283,7 +292,7 @@
           </div>
 
           <!-- Hardware Acceleration -->
-          <div class="setting-group">
+          <div class="setting-group advanced-mode-only">
             <label class="setting-label">🚀 Tăng tốc phần cứng</label>
             <div id="hw-accel-status" class="hw-accel-status">
               <span class="hw-loading">Đang phát hiện GPU...</span>
@@ -296,7 +305,7 @@
           </div>
 
           <!-- Encoder Speed -->
-          <div class="setting-group">
+          <div class="setting-group advanced-mode-only">
             <label class="setting-label">🏎️ Tốc độ mã hóa: <strong id="preset-value">medium</strong></label>
             <p class="setting-desc">Chậm hơn = nén hiệu quả hơn (file nhỏ hơn)</p>
             <input type="range" id="encoder-preset" class="slider" min="0" max="8" value="4">
@@ -316,6 +325,6 @@
     <p id="loading-text">Đang quét file...</p>
   </div>
 
-  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=2"></script>
 </body>
 </html>
