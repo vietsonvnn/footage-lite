@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FootageLite — Công cụ nén Video</title>
+  <meta name="description" content="FootageLite - Công cụ nén video footage chuyên nghiệp, giảm dung lượng mà vẫn giữ chất lượng cao.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+  <div class="app-container">
+
+    <!-- Header -->
+    <header class="header">
+      <div class="header-logo">
+        <span class="logo-icon">🎬</span>
+        <h1>FootageLite</h1>
+        <span class="header-subtitle">Công cụ nén Video Footage</span>
+      </div>
+      <div id="ffmpeg-status" class="ffmpeg-status"></div>
+    </header>
+
+    <!-- FFmpeg Warning Banner (hidden by default) -->
+    <div id="ffmpeg-warning" class="ffmpeg-warning" style="display:none">
+      <span class="warning-icon">⚠️</span>
+      <div>
+        <strong>FFmpeg chưa được cài đặt!</strong>
+        <p>Vui lòng cài FFmpeg và thêm vào PATH. <a href="https://ffmpeg.org/download.html" target="_blank" rel="noopener noreferrer">Tải FFmpeg</a></p>
+      </div>
+    </div>
+
+    <!-- Main Content: 2 columns -->
+    <div class="main-content">
+
+      <!-- Left Column: Source + File List -->
+      <div class="left-column">
+
+        <!-- Source Panel -->
+        <div class="glass-card source-panel">
+          <h2 class="card-title"><span class="card-icon">📂</span> Thư mục nguồn</h2>
+          <div class="input-group">
+            <input type="text" id="source-path" placeholder="Chọn thư mục chứa video footage...">
+            <button id="btn-browse-source" class="btn btn-secondary btn-icon" title="Duyệt">
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+              </svg>
+              Duyệt
+            </button>
+            <button id="btn-scan" class="btn btn-primary" disabled>🔍 Quét</button>
+          </div>
+          <!-- Scan info bar -->
+          <div id="scan-info" class="scan-info" style="display:none">
+            <span>📊 Tìm thấy <strong id="file-count">0</strong> file video</span>
+            <span>💾 Tổng: <strong id="total-size">0 MB</strong></span>
+            <span>✅ Đã chọn: <strong id="selected-count">0</strong> file (<strong id="selected-size">0 MB</strong>)</span>
+          </div>
+        </div>
+
+        <!-- File List -->
+        <div id="scan-section" class="glass-card file-list-card" style="display:none">
+          <div class="card-header">
+            <h2 class="card-title"><span class="card-icon">📋</span> Danh sách Video</h2>
+            <div class="table-actions">
+              <label class="checkbox-custom">
+                <input type="checkbox" id="select-all" checked>
+                <span class="checkmark"></span>
+                Chọn tất cả
+              </label>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="file-table">
+              <thead>
+                <tr>
+                  <th class="col-check"></th>
+                  <th class="col-name">Tên file</th>
+                  <th class="col-res">Độ phân giải</th>
+                  <th class="col-duration">Thời lượng</th>
+                  <th class="col-size sortable" data-sort="size">Dung lượng ▼</th>
+                  <th class="col-codec">Codec</th>
+                  <th class="col-status">Trạng thái</th>
+                </tr>
+              </thead>
+              <tbody id="file-table-body">
+                <!-- Dynamic rows -->
+              </tbody>
+            </table>
+          </div>
+          <!-- Empty state -->
+          <div id="empty-state" class="empty-state" style="display:none">
+            <span class="empty-icon">🎥</span>
+            <p>Không tìm thấy file video nào trong thư mục này</p>
+          </div>
+        </div>
+
+        <!-- Progress Section (hidden by default) — rendered as fixed floating bar via CSS -->
+        <div id="progress-section" class="glass-card progress-section" style="display:none">
+          <h2 class="card-title"><span class="card-icon">⚡</span> Tiến trình nén</h2>
+          <!-- Overall progress -->
+          <div class="progress-item">
+            <div class="progress-label">
+              <span>Tổng tiến trình</span>
+              <span id="overall-progress-text">0 / 0 file</span>
+            </div>
+            <div class="progress-bar">
+              <div id="overall-progress" class="progress-fill"></div>
+            </div>
+          </div>
+          <!-- Current file progress -->
+          <div class="progress-item">
+            <div class="progress-label">
+              <span id="current-file-name">Đang chuẩn bị...</span>
+              <span id="file-progress-text">0%</span>
+            </div>
+            <div class="progress-bar">
+              <div id="file-progress" class="progress-fill progress-fill-accent"></div>
+            </div>
+          </div>
+          <!-- Speed info -->
+          <div class="speed-info">
+            <span>🎞️ <strong id="encode-fps">0</strong> fps</span>
+            <span>⚡ Tốc độ: <strong id="encode-speed">0x</strong></span>
+            <span>🔧 Bộ mã hóa: <strong id="current-encoder">-</strong></span>
+          </div>
+          <button id="btn-cancel" class="btn btn-danger">✖ Hủy bỏ</button>
+        </div>
+
+        <!-- Results Section (hidden by default) -->
+        <div id="results-section" class="glass-card results-section" style="display:none">
+          <h2 class="card-title"><span class="card-icon">🎉</span> Kết quả nén</h2>
+          <div class="table-container">
+            <table class="results-table">
+              <thead>
+                <tr>
+                  <th>Tên file</th>
+                  <th>Gốc</th>
+                  <th>Đã nén</th>
+                  <th>Tiết kiệm</th>
+                  <th>% Giảm</th>
+                </tr>
+              </thead>
+              <tbody id="results-table-body"></tbody>
+              <tfoot>
+                <tr class="total-row">
+                  <td><strong>Tổng cộng</strong></td>
+                  <td id="total-original">-</td>
+                  <td id="total-compressed">-</td>
+                  <td id="total-saved">-</td>
+                  <td id="total-percent">-</td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <!-- Error list if any -->
+          <div id="error-list" class="error-list" style="display:none">
+            <h3>⚠️ Lỗi</h3>
+            <ul id="error-items"></ul>
+          </div>
+          <button id="btn-open-output" class="btn btn-primary">📁 Mở thư mục đầu ra</button>
+        </div>
+      </div>
+
+      <!-- Right Column: Settings -->
+      <div class="right-column">
+
+        <!-- Compress Button — at the top for easy access -->
+        <button id="btn-compress" class="btn btn-primary btn-large btn-compress-top" disabled>
+          ▶️ Bắt đầu nén
+        </button>
+
+        <div class="glass-card settings-panel">
+          <h2 class="card-title"><span class="card-icon">⚙️</span> Cài đặt</h2>
+
+          <!-- Replace Original Option — most used, on top -->
+          <div class="setting-group">
+            <label class="setting-label">🔄 Ghi đè file gốc</label>
+            <label class="checkbox-custom replace-original-option">
+              <input type="checkbox" id="replace-original">
+              <span class="checkmark"></span>
+              Xóa file gốc, thay bằng file đã nén (giữ nguyên tên)
+            </label>
+            <p class="setting-desc setting-warning" id="replace-original-warning" style="display:none">
+              ⚠️ <strong>Cẩn thận:</strong> File gốc sẽ bị xóa vĩnh viễn sau khi nén thành công!
+            </p>
+          </div>
+
+          <!-- Output Folder -->
+          <div class="setting-group" id="output-folder-group">
+            <label class="setting-label">📁 Thư mục đầu ra</label>
+            <div class="input-group">
+              <input type="text" id="output-path" placeholder="Mặc định: thư_mục_gốc/_compressed/">
+              <button id="btn-browse-output" class="btn btn-secondary btn-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                Duyệt
+              </button>
+            </div>
+            <label class="checkbox-custom" style="margin-top: 8px;">
+              <input type="checkbox" id="keep-structure" checked>
+              <span class="checkmark"></span>
+              Giữ cấu trúc thư mục con
+            </label>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Size Threshold -->
+          <div class="setting-group">
+            <label class="setting-label">📏 Dung lượng tối thiểu</label>
+            <p class="setting-desc">Chỉ nén file có dung lượng từ giá trị này trở lên</p>
+            <div class="size-threshold-input">
+              <input type="number" id="size-threshold" class="input-number" min="0" max="50000" step="1" value="100">
+              <span class="input-unit">MB</span>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Quality Preset -->
+          <div class="setting-group">
+            <label class="setting-label">🎨 Chất lượng đầu ra</label>
+            <div class="quality-options">
+              <div class="quality-option" data-crf="18" data-preset="slow">
+                <div class="quality-header">
+                  <span class="quality-badge">🏆</span>
+                  <strong>Gần như gốc</strong>
+                </div>
+                <p class="quality-desc">Giữ nguyên chất lượng tối đa. Cho footage cần color grading, VFX.</p>
+                <span class="quality-estimate">Giảm ~30-50%</span>
+              </div>
+              <div class="quality-option active" data-crf="23" data-preset="medium">
+                <div class="quality-header">
+                  <span class="quality-badge">⭐</span>
+                  <strong>Khuyến nghị</strong>
+                </div>
+                <p class="quality-desc">Chất lượng tuyệt vời, phù hợp hầu hết mọi trường hợp.</p>
+                <span class="quality-estimate">Giảm ~50-70%</span>
+              </div>
+              <div class="quality-option" data-crf="28" data-preset="medium">
+                <div class="quality-header">
+                  <span class="quality-badge">🚀</span>
+                  <strong>Tiết kiệm dung lượng</strong>
+                </div>
+                <p class="quality-desc">Chất lượng tốt, tối ưu dung lượng lưu trữ.</p>
+                <span class="quality-estimate">Giảm ~70-85%</span>
+              </div>
+              <div class="quality-option" data-crf="custom" data-preset="medium">
+                <div class="quality-header">
+                  <span class="quality-badge">🔧</span>
+                  <strong>Tùy chỉnh</strong>
+                </div>
+                <p class="quality-desc">Tự chỉnh CRF và các thông số.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Custom CRF (hidden by default) -->
+          <div id="custom-crf-section" class="setting-group" style="display:none">
+            <label class="setting-label">Giá trị CRF: <strong id="crf-value">23</strong></label>
+            <p class="setting-desc">Thấp hơn = chất lượng cao hơn, file lớn hơn</p>
+            <input type="range" id="custom-crf" class="slider" min="0" max="51" value="23">
+            <div class="slider-range">
+              <span>0 (Không mất dữ liệu)</span>
+              <span>51 (Thấp nhất)</span>
+            </div>
+          </div>
+
+          <hr class="divider">
+
+          <!-- Codec -->
+          <div class="setting-group">
+            <label class="setting-label">🎞️ Codec</label>
+            <div class="select-wrapper">
+              <select id="codec-select" class="select">
+                <option value="h265" selected>H.265 (HEVC) — Nén tốt nhất ✅</option>
+                <option value="h264">H.264 (AVC) — Tương thích rộng</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Hardware Acceleration -->
+          <div class="setting-group">
+            <label class="setting-label">🚀 Tăng tốc phần cứng</label>
+            <div id="hw-accel-status" class="hw-accel-status">
+              <span class="hw-loading">Đang phát hiện GPU...</span>
+            </div>
+            <label class="checkbox-custom" style="margin-top: 8px; display:none" id="hw-accel-toggle">
+              <input type="checkbox" id="use-hw-accel" checked>
+              <span class="checkmark"></span>
+              Dùng GPU để mã hóa (nhanh hơn rất nhiều)
+            </label>
+          </div>
+
+          <!-- Encoder Speed -->
+          <div class="setting-group">
+            <label class="setting-label">🏎️ Tốc độ mã hóa: <strong id="preset-value">medium</strong></label>
+            <p class="setting-desc">Chậm hơn = nén hiệu quả hơn (file nhỏ hơn)</p>
+            <input type="range" id="encoder-preset" class="slider" min="0" max="8" value="4">
+            <div class="slider-range">
+              <span>Cực nhanh</span>
+              <span>Cực chậm</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="loading-spinner"></div>
+    <p id="loading-text">Đang quét file...</p>
+  </div>
+
+  <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
