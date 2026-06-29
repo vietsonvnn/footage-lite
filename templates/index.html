@@ -304,6 +304,17 @@
             </label>
           </div>
 
+          <!-- GPU Usage Limit -->
+          <div class="setting-group advanced-mode-only" id="gpu-limit-group" style="display:none">
+            <label class="setting-label">🌡️ Giới hạn GPU: <strong id="gpu-limit-value">100%</strong></label>
+            <p class="setting-desc">Giảm tải GPU để tránh lag máy khi làm việc khác</p>
+            <input type="range" id="gpu-limit" class="slider" min="1" max="4" value="4">
+            <div class="slider-range">
+              <span>25% — Nhẹ nhàng</span>
+              <span>100% — Tối đa</span>
+            </div>
+          </div>
+
           <!-- Encoder Speed -->
           <div class="setting-group advanced-mode-only">
             <label class="setting-label">🏎️ Tốc độ mã hóa: <strong id="preset-value">medium</strong></label>

@@ -23,7 +23,8 @@ let currentSettings = {
   sizeThreshold: 100,
   keepStructure: true,
   useHw: true,
-  replaceOriginal: false
+  replaceOriginal: false,
+  gpuLimit: 4
 };
 let hwEncoderInfo = null;
 let eventSource = null;
@@ -154,6 +155,7 @@ async function checkFFmpeg() {
 async function detectHardwareEncoders() {
   const statusEl = $('#hw-accel-status');
   const toggleEl = $('#hw-accel-toggle');
+  const gpuLimitGroup = $('#gpu-limit-group');
   
   try {
     const data = await apiGet('/api/hw-encoders');
@@ -162,9 +164,11 @@ async function detectHardwareEncoders() {
     if (data.available && statusEl) {
       statusEl.innerHTML = `<span class="hw-badge hw-available">⚡ ${escapeHtml(data.type || 'GPU')} detected</span>`;
       if (toggleEl) toggleEl.style.display = 'flex';
+      if (gpuLimitGroup) gpuLimitGroup.style.display = '';
     } else if (statusEl) {
       statusEl.innerHTML = '<span class="hw-badge hw-unavailable">CPU only (no GPU encoder found)</span>';
       if (toggleEl) toggleEl.style.display = 'none';
+      if (gpuLimitGroup) gpuLimitGroup.style.display = 'none';
       currentSettings.useHw = false;
     }
   } catch (err) {
@@ -172,6 +176,7 @@ async function detectHardwareEncoders() {
     if (statusEl) {
       statusEl.innerHTML = '<span class="hw-badge hw-unavailable">CPU only</span>';
     }
+    if (gpuLimitGroup) gpuLimitGroup.style.display = 'none';
     currentSettings.useHw = false;
   }
 }
@@ -660,7 +665,8 @@ async function startCompression() {
         source_folder: currentSettings.sourceFolder,
         keep_structure: currentSettings.keepStructure,
         use_hw: currentSettings.useHw,
-        replace_original: currentSettings.replaceOriginal
+        replace_original: currentSettings.replaceOriginal,
+        gpu_limit: currentSettings.gpuLimit
       }
     });
   } catch (err) {
@@ -888,6 +894,18 @@ function setupEventListeners() {
   if (useHwAccel) {
     useHwAccel.addEventListener('change', (e) => {
       currentSettings.useHw = e.target.checked;
+    });
+  }
+
+  // GPU usage limit slider
+  const gpuLimitSlider = $('#gpu-limit');
+  const gpuLimitLabel = $('#gpu-limit-value');
+  const GPU_LIMIT_MAP = { 1: '25%', 2: '50%', 3: '75%', 4: '100%' };
+  if (gpuLimitSlider) {
+    gpuLimitSlider.addEventListener('input', (e) => {
+      const val = parseInt(e.target.value, 10);
+      currentSettings.gpuLimit = val;
+      if (gpuLimitLabel) gpuLimitLabel.textContent = GPU_LIMIT_MAP[val] || '100%';
     });
   }
 

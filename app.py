@@ -338,6 +338,19 @@ def _compress_files(files, settings):
     source_folder = settings.get('source_folder', '')
     use_hw = settings.get('use_hw', True)
     replace_original = settings.get('replace_original', False)
+    gpu_limit = settings.get('gpu_limit', 4)  # 1=25%, 2=50%, 3=75%, 4=100%
+
+    # Map GPU limit to NVENC preset (p1=lightest … p4=heaviest)
+    # and Windows process priority class
+    GPU_NVENC_PRESET_MAP = {1: 'p1', 2: 'p2', 3: 'p3', 4: 'p4'}
+    GPU_PRIORITY_MAP = {
+        1: 0x00000040,  # IDLE_PRIORITY_CLASS
+        2: 0x00004000,  # BELOW_NORMAL_PRIORITY_CLASS
+        3: 0x00000020,  # NORMAL_PRIORITY_CLASS
+        4: 0x00000020,  # NORMAL_PRIORITY_CLASS
+    }
+    nvenc_preset = GPU_NVENC_PRESET_MAP.get(gpu_limit, 'p4')
+    process_priority = GPU_PRIORITY_MAP.get(gpu_limit, 0x00000020)
 
     # --- Determine encoder (hardware or software fallback) ---
     hw_encoders = _detect_hw_encoders() if use_hw else {}
@@ -412,11 +425,11 @@ def _compress_files(files, settings):
 
             if 'nvenc' in hw_codec_name:
                 # NVIDIA NVENC: -cq for constant quality, -rc vbr,
-                # -preset p4 (balanced: p1=fastest … p7=slowest)
+                # -preset controlled by gpu_limit (p1=lightest … p4=heaviest)
                 cmd.extend([
                     '-rc', 'vbr',
                     '-cq', str(crf),
-                    '-preset', 'p4',
+                    '-preset', nvenc_preset,
                 ])
                 # Cap bitrate to prevent output exceeding original size.
                 # Allow up to 90% of original bitrate as maximum.
@@ -472,7 +485,8 @@ def _compress_files(files, settings):
         # --- Run FFmpeg ---
         creation_flags = 0
         if sys.platform == 'win32':
-            creation_flags = subprocess.CREATE_NO_WINDOW
+            # Combine CREATE_NO_WINDOW with process priority from GPU limit
+            creation_flags = subprocess.CREATE_NO_WINDOW | process_priority
 
         try:
             proc = subprocess.Popen(
