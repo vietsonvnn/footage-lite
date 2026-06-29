@@ -932,6 +932,6 @@ def open_folder():
 # ---------------------------------------------------------------------------
 
 if __name__ == '__main__':
-    print('\nFootageLite is running!')
+    print('\nFootageLite v2.0 is running!')
     print('Open http://localhost:5000 in your browser\n')
     app.run(debug=False, port=5000, threaded=True)
