@@ -338,7 +338,7 @@ def _compress_files(files, settings):
     source_folder = settings.get('source_folder', '')
     use_hw = settings.get('use_hw', True)
     replace_original = settings.get('replace_original', False)
-    gpu_limit = settings.get('gpu_limit', 4)  # 1=25%, 2=50%, 3=75%, 4=100%
+    gpu_limit = settings.get('gpu_limit', 3)  # 1=25%, 2=50%, 3=75%, 4=100%
 
     # Map GPU limit to NVENC preset (p1=lightest … p4=heaviest)
     # and Windows process priority class

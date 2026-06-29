@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=2">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}?v=4">
 </head>
 <body class="mode-simple">
   <div class="app-container">
@@ -306,10 +306,10 @@
           </div>
 
           <!-- GPU Usage Limit -->
-          <div class="setting-group advanced-mode-only" id="gpu-limit-group" style="display:none">
-            <label class="setting-label">🌡️ Giới hạn GPU: <strong id="gpu-limit-value">100%</strong></label>
+          <div class="setting-group" id="gpu-limit-group" style="display:none">
+            <label class="setting-label">🌡️ Giới hạn GPU: <strong id="gpu-limit-value">75%</strong></label>
             <p class="setting-desc">Giảm tải GPU để tránh lag máy khi làm việc khác</p>
-            <input type="range" id="gpu-limit" class="slider" min="1" max="4" value="4">
+            <input type="range" id="gpu-limit" class="slider" min="1" max="4" value="3">
             <div class="slider-range">
               <span>25% — Nhẹ nhàng</span>
               <span>100% — Tối đa</span>
@@ -337,6 +337,6 @@
     <p id="loading-text">Đang quét file...</p>
   </div>
 
-  <script src="{{ url_for('static', filename='js/app.js') }}?v=2"></script>
+  <script src="{{ url_for('static', filename='js/app.js') }}?v=4"></script>
 </body>
 </html>

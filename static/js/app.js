@@ -24,7 +24,7 @@ let currentSettings = {
   keepStructure: true,
   useHw: true,
   replaceOriginal: false,
-  gpuLimit: 4
+  gpuLimit: 3
 };
 let hwEncoderInfo = null;
 let eventSource = null;
