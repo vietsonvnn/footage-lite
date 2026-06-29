@@ -389,6 +389,18 @@ def _compress_files(files, settings):
             continue
 
         # --- Build FFmpeg command ---
+        # Get original file size for later comparison
+        try:
+            original_size_pre = os.path.getsize(filepath)
+        except OSError:
+            original_size_pre = 0
+
+        # Estimate a sensible maxrate from original file bitrate
+        # to prevent NVENC from producing files larger than the original
+        original_bitrate_kbps = 0
+        if probe and probe.get('duration') and probe['duration'] > 0 and original_size_pre > 0:
+            original_bitrate_kbps = int((original_size_pre * 8) / probe['duration'] / 1000)
+
         if hw_codec_name:
             # Hardware-accelerated encoding
             cmd = [
@@ -406,6 +418,14 @@ def _compress_files(files, settings):
                     '-cq', str(crf),
                     '-preset', 'p4',
                 ])
+                # Cap bitrate to prevent output exceeding original size.
+                # Allow up to 90% of original bitrate as maximum.
+                if original_bitrate_kbps > 0:
+                    max_br = int(original_bitrate_kbps * 0.9)
+                    cmd.extend([
+                        '-maxrate', f'{max_br}k',
+                        '-bufsize', f'{max_br * 2}k',
+                    ])
             elif 'qsv' in hw_codec_name:
                 # Intel QSV: -global_quality instead of -crf
                 cmd.extend([
@@ -589,6 +609,27 @@ def _compress_files(files, settings):
             compressed_size = os.path.getsize(out_path)
         except OSError:
             pass
+
+        # --- Smart check: skip if compressed file is LARGER than original ---
+        if compressed_size >= original_size and original_size > 0:
+            # Compressed file is not smaller — discard it and keep the original
+            try:
+                os.remove(out_path)
+            except OSError:
+                pass
+
+            with state_lock:
+                compression_state['file_progress'] = 100
+                compression_state['results'].append({
+                    'file': os.path.basename(filepath),
+                    'original_size': original_size,
+                    'compressed_size': original_size,  # no change
+                })
+                compression_state['errors'].append({
+                    'file': os.path.basename(filepath),
+                    'error': f'Bỏ qua — file nén ({compressed_size / 1048576:.1f} MB) lớn hơn hoặc bằng file gốc ({original_size / 1048576:.1f} MB). Giữ nguyên file gốc.',
+                })
+            continue
 
         # --- Replace original if requested ---
         if replace_original and os.path.exists(out_path) and compressed_size > 0:
